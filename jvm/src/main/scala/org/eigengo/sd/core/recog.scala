@@ -61,6 +61,16 @@ private[core] class RecogSessionActor(amqpConnection: ActorRef, jabberActor: Act
   // thank goodness for British spelling :)
   val emptyBehaviour: StateFunction = { case _ => stay() }
 
+  startWith(Idle, Empty)
+
+  when(Idle, stateTimeout) {
+    case Event(Begin(minCoins), _) =>
+      sender ! self.path.name
+      goto(Active) using Running(minCoins, None)
+  }
+
+  when(Active)(emptyBehaviour)
+
   // go!
   initialize
 
