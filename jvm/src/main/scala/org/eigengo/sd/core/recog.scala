@@ -62,14 +62,28 @@ private[core] class RecogSessionActor(amqpConnection: ActorRef, jabberActor: Act
   val emptyBehaviour: StateFunction = { case _ => stay() }
 
   startWith(Idle, Empty)
-
+  // when we receive the ``Begin`` even when idle, we become ``Active``
   when(Idle, stateTimeout) {
     case Event(Begin(minCoins), _) =>
       sender ! self.path.name
       goto(Active) using Running(minCoins, None)
   }
 
-  when(Active)(emptyBehaviour)
+  // when ``Active``, we can process images and frames
+  when(Active, stateTimeout) {
+    case Event(_, _) =>
+      goto(Completed)
+  }
+
+  // until we hit Aborted and Completed, which do nothing interesting
+  when(Aborted)(emptyBehaviour)
+  when(Completed)(emptyBehaviour)
+
+  // unhandled events in the states
+  whenUnhandled {
+    case Event(StateTimeout, _) => goto(Aborted)
+    case Event(GetInfo, _)      => sender ! "OK"; stay()
+  }
 
   // go!
   initialize
