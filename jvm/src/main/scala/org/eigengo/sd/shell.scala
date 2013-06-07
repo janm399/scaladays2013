@@ -15,11 +15,21 @@ object Shell extends App with Core with ConfigCoreConfiguration {
   import akka.actor.ActorDSL._
   import Utils._
 
+  // we don't want to bother with the ``ask`` pattern, so
+  // we set up sender that only prints out the responses to
+  // be implicitly available for ``tell`` to pick up.
+  implicit val _ = actor(new Act {
+      become {
+        case x => println(">>> " + x)
+      }
+    })
+
   // main command loop
   @tailrec
   private def commandLoop(): Unit = {
     Console.readLine() match {
       case QuitCommand                => return
+      case BeginCommand(minCoins)     => coordinator ! Begin(minCoins.toInt)
 
       case _                          => println("WTF??!!")
     }
