@@ -74,7 +74,32 @@ private[core] class RecogSessionActor(amqpConnection: ActorRef, jabberActor: Act
 
   // when ``Active``, we can process images and frames
   when(Active, stateTimeout) {
-    case Event(_, _) =>
+    case Event(Image(image, end), r@Running(minCoins, None)) =>
+      // Image with no decoder yet. We will be needing the ChunkingDecoderContext.
+      val decoder = new ChunkingDecoderContext(countCoins(minCoins))
+      decoder.decode(image, end)
+      stay() using r.copy(decoder = Some(decoder))
+    case Event(Image(image, end), Running(minCount, Some(decoder: ImageDecoderContext))) if image.length > 0  =>
+      // Image with existing decoder. Shut up and apply.
+      decoder.decode(image, end)
+      stay()
+    case Event(Image(_, _), Running(_, Some(decoder))) =>
+      // Empty image (following the previous case)
+      decoder.close()
+      goto(Completed)
+
+    case Event(Frame(frame, _), r@Running(minCoins, None)) =>
+      // Frame with no decoder yet. We will be needing the H264DecoderContext.
+      val decoder = new H264DecoderContext(countCoins(minCoins))
+      decoder.decode(frame, true)
+      stay() using r.copy(decoder = Some(decoder))
+    case Event(Frame(frame, _), Running(minCount, Some(decoder: VideoDecoderContext))) if frame.length > 0 =>
+      // Frame with existing decoder. Just decode. (Teehee--I said ``Just``.)
+      decoder.decode(frame, true)
+      stay()
+    case Event(Frame(_, _), Running(_, Some(decoder))) =>
+      // Last frame
+      decoder.close()
       goto(Completed)
   }
 
@@ -102,5 +127,8 @@ private[core] class RecogSessionActor(amqpConnection: ActorRef, jabberActor: Act
     context.stop(amqp)
   }
 
+  // Curried function that--when applied to the first parameter list--
+  // is nicely suitable for the various ``DecoderContext``s
+  def countCoins(minCoins: Int)(image: Array[Byte]): Unit = ()
 }
 
