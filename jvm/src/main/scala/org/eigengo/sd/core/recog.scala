@@ -41,6 +41,21 @@ private[core] object RecogSessionActor {
 }
 
 /**
+ * We define the instances of ``JsonReader`` for various types in a trait, because
+ * we may decide to use them outside of the core; I can imagine a situation where
+ * we would like to use them in our REST API.
+ *
+ * In that case, all that we'd have to do is to mix in this trait to our Spray endpoint
+ * and then happily use ``complete`` or ``ctx.complete``.
+ */
+trait RecogSessionActorFormats extends DefaultJsonProtocol {
+  import RecogSessionActor._
+
+  implicit val CoinFormat = jsonFormat2(Coin)
+  implicit val CoinResponseFormat = jsonFormat2(CoinResponse)
+}
+
+/**
  * This actor deals with the states of the recognition session. We use FSM here--even though
  * we only have a handful of states, recognising things sometimes needs many more states
  * and using ``become`` and ``unbecome`` of the ``akka.actor.ActorDSL._`` would be cumbersome.
@@ -49,7 +64,10 @@ private[core] object RecogSessionActor {
  * @param jabberActor the actor that will receive our output
  */
 private[core] class RecogSessionActor(amqpConnection: ActorRef, jabberActor: ActorRef) extends Actor with
-  FSM[RecogSessionActor.State, RecogSessionActor.Data] {
+  FSM[RecogSessionActor.State, RecogSessionActor.Data] with
+  AmqpOperations with
+  RecogSessionActorFormats with
+  ImageEncoding {
 
   import RecogSessionActor._
   import scala.concurrent.duration._
@@ -129,7 +147,10 @@ private[core] class RecogSessionActor(amqpConnection: ActorRef, jabberActor: Act
 
   // Curried function that--when applied to the first parameter list--
   // is nicely suitable for the various ``DecoderContext``s
-  def countCoins(minCoins: Int)(image: Array[Byte]): Unit = ()
+  def countCoins(minCoins: Int)(image: Array[Byte]): Unit =
+    amqpAsk[CoinResponse](amqp)("amq.direct", "count.key", mkImagePayload(image)) onSuccess {
+      case res => if (res.coins.size >= minCoins) jabberActor ! res
+    }
 }
 
 /**
@@ -138,9 +159,9 @@ private[core] class RecogSessionActor(amqpConnection: ActorRef, jabberActor: Act
  */
 private[core] trait AmqpOperations {
 
-  def amqpAsk(amqp: ActorRef)
+  def amqpAsk[A](amqp: ActorRef)
                        (exchange: String, routingKey: String, payload: Array[Byte])
-                       (implicit ctx: ExecutionContext): Future[String] = {
+                       (implicit ctx: ExecutionContext, reader: JsonReader[A]): Future[A] = {
     import scala.concurrent.duration._
     import akka.pattern.ask
 
@@ -148,7 +169,8 @@ private[core] trait AmqpOperations {
 
     (amqp ? Request(Publish(exchange, routingKey, payload) :: Nil)).map {
       case Response(Delivery(_, _, _, body)::_) =>
-        new String(body)
+        val s = new String(body)
+        reader.read(JsonParser(s))
     }
   }
 
