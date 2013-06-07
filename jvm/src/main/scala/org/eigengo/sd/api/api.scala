@@ -16,6 +16,7 @@ trait Api {
   this: Core =>
 
   // our endpoints
+  val streamingRecogService = system.actorOf(Props(new StreamingRecogService(coordinator)))
 
   // Spray's IOExtension to the ActorSystem
   private val ioBridge: ActorRef = IOExtension(system).ioBridge()
@@ -25,6 +26,6 @@ trait Api {
 
   // create the ``HttpServer`` actor, routing the requests to our ``streamingRecogService``
   // and then bind it to all local interfaces on port ``8080``
-  system.actorOf(Props(new HttpServer(ioBridge, SingletonHandler(system.deadLetters), settings)), "http-server") ! HttpServer.Bind("0.0.0.0", 8080)
+  system.actorOf(Props(new HttpServer(ioBridge, SingletonHandler(streamingRecogService), settings)), "http-server") ! HttpServer.Bind("0.0.0.0", 8080)
 
 }
