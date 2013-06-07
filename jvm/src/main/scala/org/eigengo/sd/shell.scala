@@ -30,6 +30,7 @@ object Shell extends App with Core with ConfigCoreConfiguration {
     Console.readLine() match {
       case QuitCommand                => return
       case BeginCommand(minCoins)     => coordinator ! Begin(minCoins.toInt)
+      case GetSessionsCommand         => coordinator ! GetSessions
 
       case _                          => println("WTF??!!")
     }
