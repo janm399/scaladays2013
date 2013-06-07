@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="SBT: xuggle:xuggle-xuggler:5.4">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.ivy2/cache/xuggle/xuggle-xuggler/jars/xuggle-xuggler-5.4.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

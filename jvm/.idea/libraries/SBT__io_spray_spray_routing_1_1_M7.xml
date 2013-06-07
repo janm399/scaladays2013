@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="SBT: io.spray:spray-routing:1.1-M7">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.ivy2/cache/io.spray/spray-routing/jars/spray-routing-1.1-M7.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.ivy2/cache/io.spray/spray-routing/srcs/spray-routing-1.1-M7-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

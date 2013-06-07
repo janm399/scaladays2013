@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="SBT: io.spray:spray-testkit:1.1-M7:test">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.ivy2/cache/io.spray/spray-testkit/jars/spray-testkit-1.1-M7.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.ivy2/cache/io.spray/spray-testkit/srcs/spray-testkit-1.1-M7-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="SBT: org.aspectj:aspectjweaver:1.7.2">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.ivy2/cache/org.aspectj/aspectjweaver/jars/aspectjweaver-1.7.2.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.ivy2/cache/org.aspectj/aspectjweaver/srcs/aspectjweaver-1.7.2-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>
