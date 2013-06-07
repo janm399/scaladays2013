@@ -61,6 +61,9 @@ private[core] class RecogSessionActor(amqpConnection: ActorRef, jabberActor: Act
   // thank goodness for British spelling :)
   val emptyBehaviour: StateFunction = { case _ => stay() }
 
+  // make a connection to the AMQP broker
+  val amqp = ConnectionOwner.createChildActor(amqpConnection, Props(new RpcClient()))
+
   startWith(Idle, Empty)
   // when we receive the ``Begin`` even when idle, we become ``Active``
   when(Idle, stateTimeout) {
@@ -85,8 +88,19 @@ private[core] class RecogSessionActor(amqpConnection: ActorRef, jabberActor: Act
     case Event(GetInfo, _)      => sender ! "OK"; stay()
   }
 
+  // cleanup
+  onTransition {
+    case _ -> Aborted   => log.info("Aborting!"); context.stop(self)
+    case _ -> Completed => log.info("Done!");     context.stop(self)
+  }
+
   // go!
   initialize
+
+  // cleanup
+  override def postStop() {
+    context.stop(amqp)
+  }
 
 }
 
